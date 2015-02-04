@@ -1,0 +1,35 @@
+package VerificationFunctions
+public
+	annex Resolute {**
+		SystemWideRequirement1() <= **"all threads must have a specified dispatch protocol"** 
+			forall (t : thread) .
+				HasDispatchProtocol(t)
+				
+		HasDispatchProtocol(t : thread) <= **"thread " t " has a dispatch protocol"**
+			has_property(t, Thread_Properties::Dispatch_Protocol)
+			
+		SourceIsEvent(c : component) <= **"source features for connections on component " c " should have an event source"**
+			forall(conn : connections(c)) . 
+				is_event_port(source(conn))
+			
+		--helper functions
+			
+		PrintAADL(a : aadl) <= ** a ** true
+		
+		PrintFeatures(c : component) <= **"prints the features of " c**
+			forall(sub : features(c)) .
+				PrintAADL(sub)
+		
+		PrintSubcomponents(c : component) <= **"prints the subcomponents of " c**
+			forall(sub : subcomponents(c)) .
+				PrintAADL(sub)
+				
+		PrintConnections(c : component) <= **"prints the connections of " c**
+			forall(sub : connections(c)) .
+				PrintAADL(sub)
+				
+		PrintInstances(c : component) <= **"prints the instances of " c**
+			forall(sub : instances(c)) .
+				PrintAADL(sub)
+	**};
+end VerificationFunctions;

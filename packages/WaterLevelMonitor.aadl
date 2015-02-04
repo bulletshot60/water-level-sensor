@@ -1,0 +1,110 @@
+package WaterLevelMonitor
+
+public
+	with Data_Model, WaterLevelSensor, WaterLevelPump, VerificationFunctions;
+	
+	--////////////////////////////////////////
+	-- Start Subprogram Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	subprogram water_level_regulator
+		features
+			water_level: in parameter WaterLevelSensor::water_level;
+			enable_water_pump: out event port;
+			disable_water_pump: out event port;
+		flows
+			flow1: flow path water_level -> enable_water_pump;
+			flow2: flow path water_level -> disable_water_pump;
+	end water_level_regulator;
+	--////////////////////////////////////////
+	-- End Subprogram Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+	--////////////////////////////////////////
+	-- Start Thread Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	thread regulate_water_level
+		features 
+			water_level: in data port WaterLevelSensor::water_level;
+			enable_water_pump: out event port;
+			disable_water_pump: out event port;
+		flows
+			flow1: flow path water_level -> enable_water_pump;
+			flow2: flow path water_level -> disable_water_pump;
+	end regulate_water_level;
+	
+	thread implementation regulate_water_level.impl
+		subcomponents
+			water_level_regulator_impl: subprogram water_level_regulator;
+		calls
+			myCalls: {
+				water_level_regulator: subprogram water_level_regulator;
+			};
+		connections
+			inParameter1: parameter water_level -> water_level_regulator.water_level;
+			outEvent1: port water_level_regulator.enable_water_pump -> enable_water_pump;
+			outEvent2: port water_level_regulator.disable_water_pump -> disable_water_pump;
+		flows
+			flow1: flow path water_level -> inParameter1 -> water_level_regulator_impl.flow1 -> outEvent1 -> enable_water_pump;
+			flow2: flow path water_level -> inParameter1 -> water_level_regulator_impl.flow1 -> outEvent2 -> disable_water_pump;
+		properties
+			Dispatch_Protocol => sporadic; 
+	end regulate_water_level.impl;
+	--////////////////////////////////////////
+	-- End Thread Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+	--////////////////////////////////////////
+	-- Start Processor Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	process regulate_water_level_process
+		features 
+			water_level: in data port WaterLevelSensor::water_level;
+			enable_water_pump: out event port;
+			disable_water_pump: out event port;
+		flows
+			flow1: flow path water_level -> enable_water_pump;
+			flow2: flow path water_level -> disable_water_pump;
+	end regulate_water_level_process;
+	
+	process implementation regulate_water_level_process.impl
+		subcomponents
+			regulator: thread regulate_water_level.impl;
+		connections
+			inParameter1: port water_level -> regulator.water_level;
+			outEvent1: port regulator.enable_water_pump -> enable_water_pump;
+			outEvent2: port regulator.disable_water_pump -> disable_water_pump;
+		flows
+			flow1: flow path water_level -> inParameter1 -> regulator -> outEvent1 -> enable_water_pump;
+			flow2: flow path water_level -> inParameter1 -> regulator -> outEvent2 -> disable_water_pump;
+	end regulate_water_level_process.impl;
+	--////////////////////////////////////////
+	-- End Processor Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+	--////////////////////////////////////////
+	-- Start System Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	system water_level_monitor		
+	end water_level_monitor;
+	
+	system implementation water_level_monitor.impl
+		subcomponents
+			water_level_regulator: process regulate_water_level_process.impl;
+			water_level_sensor: system WaterLevelSensor::water_level_sensor.impl;
+			water_pump: system WaterLevelPump::water_pump.impl;
+		connections
+			parameter1: port water_level_sensor.water_level -> water_level_regulator.water_level;
+			event1: port water_level_regulator.enable_water_pump -> water_pump.enable_water_pump;
+			event2: port water_level_regulator.disable_water_pump -> water_pump.disable_water_pump;
+		flows
+			turn_on_pump_flow: end to end flow water_level_sensor.flow1 -> parameter1 -> water_level_regulator.flow1 -> event1 -> water_pump.flow1;
+			turn_off_pump_flow: end to end flow water_level_sensor.flow1 -> parameter1 -> water_level_regulator.flow2 -> event2 -> water_pump.flow2;
+		annex Resolute {**
+			prove(SystemWideRequirement1())
+		**};
+	end water_level_monitor.impl;
+	--////////////////////////////////////////
+	-- End System Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+end WaterLevelMonitor;

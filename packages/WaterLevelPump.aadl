@@ -1,0 +1,108 @@
+package WaterLevelPump
+
+public
+	with Data_Model, VerificationFunctions;
+		
+	--////////////////////////////////////////
+	-- Start Subprogram Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	subprogram pump_control_subroutine
+		features
+			enable_water_pump: in event port;
+			disable_water_pump: in event port;
+		flows
+			flow1: flow sink enable_water_pump;
+			flow2: flow sink disable_water_pump;
+	end pump_control_subroutine;
+	--////////////////////////////////////////
+	-- End Subprogram Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+	--////////////////////////////////////////
+	-- Start Thread Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	thread pump_control
+		features
+			enable_water_pump: in event port;
+			disable_water_pump: in event port;
+		flows
+			flow1: flow sink enable_water_pump;
+			flow2: flow sink disable_water_pump;
+	end pump_control;
+	
+	thread implementation pump_control.impl
+		subcomponents
+			control_subroutine_impl: subprogram pump_control_subroutine;
+		calls
+			myCalls: {
+				control_subroutine: subprogram pump_control_subroutine;
+			};
+		connections
+			event1: port enable_water_pump -> control_subroutine.enable_water_pump;
+			event2: port disable_water_pump -> control_subroutine.disable_water_pump;
+		flows
+			flow1: flow sink enable_water_pump -> event1 -> control_subroutine_impl.flow1;
+			flow2: flow sink disable_water_pump -> event2 -> control_subroutine_impl.flow2;
+		properties
+			Dispatch_Protocol => sporadic;
+	end pump_control.impl;
+	--////////////////////////////////////////
+	-- End Thread Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+	--////////////////////////////////////////
+	-- Start Processor Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	process pump_process
+		features
+			enable_water_pump: in event port;
+			disable_water_pump: in event port;
+		flows
+			flow1: flow sink enable_water_pump;
+			flow2: flow sink disable_water_pump;
+	end pump_process;
+	
+	process implementation pump_process.impl
+		subcomponents
+			pump_contoller: thread pump_control.impl;
+		connections
+			event1: port enable_water_pump -> pump_contoller.enable_water_pump;
+			event2: port disable_water_pump -> pump_contoller.disable_water_pump;
+		flows
+			flow1: flow sink enable_water_pump -> event1 -> pump_contoller.flow1;
+			flow2: flow sink disable_water_pump -> event2 -> pump_contoller.flow2;
+	end pump_process.impl;
+	--////////////////////////////////////////
+	-- End Processor Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+	--////////////////////////////////////////
+	-- Start System Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	system water_pump
+		features
+			enable_water_pump: in event port;
+			disable_water_pump: in event port;	
+		flows
+			flow1: flow sink enable_water_pump;
+			flow2: flow sink disable_water_pump;
+	end water_pump;
+	
+	system implementation water_pump.impl
+		subcomponents
+			pump_process: process pump_process.impl;
+		connections
+			event1: port enable_water_pump -> pump_process.enable_water_pump;
+			event2: port disable_water_pump -> pump_process.disable_water_pump;	
+		flows
+			flow1: flow sink enable_water_pump -> event1 -> pump_process.flow1;
+			flow2: flow sink disable_water_pump -> event2 -> pump_process.flow2;
+		annex Resolute {**
+			prove(SourceIsEvent(this))
+		**};
+	end water_pump.impl;
+	--////////////////////////////////////////
+	-- End System Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+end WaterLevelPump;

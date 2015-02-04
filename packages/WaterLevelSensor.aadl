@@ -1,0 +1,138 @@
+package WaterLevelSensor
+
+public
+	with Data_Model;
+		
+	--////////////////////////////////////////
+	-- Start Data Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	data water_level
+		properties
+			Data_Model::Data_Representation => Float;
+			Data_Model::Real_Range => 0.0 .. 100.0;
+	end water_level;
+	
+	data time
+		properties
+			Data_Model::Data_Representation => Integer;
+	end time;
+	--////////////////////////////////////////
+	-- End Data Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+	--////////////////////////////////////////
+	-- Start Subprogram Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	subprogram read_water_level
+		features
+			read_time: out parameter time;
+		flows
+			flow1: flow source read_time;
+	end read_water_level;
+	--////////////////////////////////////////
+	-- End Subprogram Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+	--////////////////////////////////////////
+	-- Start Thread Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	thread sensor_reader
+		features
+			in_water_level: in event data port water_level;
+			water_level: out data port water_level;
+			read_time: out data port time;
+		flows
+			flow1: flow path in_water_level -> water_level;
+			flow2: flow source read_time;
+		properties
+			Dispatch_Protocol => periodic;
+			Period => 1000ms;
+	end sensor_reader;
+	
+	thread implementation sensor_reader.impl
+		subcomponents
+			sensor_reader_impl: subprogram read_water_level;
+		calls
+			myCalls: {
+				sensor_reader: subprogram read_water_level;
+			};
+		connections
+			input1: parameter in_water_level -> water_level;
+			parameter1: parameter sensor_reader.read_time -> read_time;
+		flows
+			flow1: flow path in_water_level -> input1 -> water_level;
+			flow2: flow source sensor_reader_impl.flow1 -> parameter1 -> read_time;
+	end sensor_reader.impl;
+	--////////////////////////////////////////
+	-- End Thread Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+	--////////////////////////////////////////
+	-- Start Processor Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	process reader_process
+		features
+			in_water_level: in event data port water_level;
+			water_level: out data port water_level;
+			read_time: out data port time;
+		flows
+			flow1: flow path in_water_level -> water_level;
+			flow2: flow source read_time;
+	end reader_process;
+	
+	process implementation reader_process.impl
+		subcomponents
+			reader: thread sensor_reader.impl;
+		connections
+			input1: port in_water_level -> reader.in_water_level;
+			data1: port reader.water_level -> water_level;
+			data2: port reader.read_time -> read_time;
+		flows
+			flow1: flow path in_water_level -> input1 -> reader.flow1 -> data1 -> water_level;
+			flow2: flow source reader.flow2 -> data2 -> read_time;
+	end reader_process.impl;
+	--////////////////////////////////////////
+	-- End Processor Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+	--////////////////////////////////////////
+	-- Start System Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	device sensor_water_level
+		features
+			water_level: out event data port water_level;
+		flows
+			flow1: flow source water_level;
+	end sensor_water_level;
+	
+	device implementation sensor_water_level.impl
+		flows
+			flow1: flow source water_level;
+	end sensor_water_level.impl;
+	
+	system water_level_sensor
+		features
+			water_level: out data port water_level;
+			read_time: out data port time;
+		flows
+			flow1: flow source water_level;
+			flow2: flow source read_time;
+	end water_level_sensor;
+	
+	system implementation water_level_sensor.impl
+		subcomponents
+			water_level_sensor: device sensor_water_level.impl;
+			reader: process reader_process.impl;
+		connections
+			input1: port water_level_sensor.water_level -> reader.in_water_level;
+			data1: port reader.water_level -> water_level;
+			data2: port reader.read_time -> read_time;
+		flows
+			flow1: flow source water_level_sensor.flow1 -> input1 -> reader.flow1 -> data1 -> water_level;
+			flow2: flow source reader.flow2 -> data2 -> read_time;
+	end water_level_sensor.impl;
+	--////////////////////////////////////////
+	-- End System Declarations
+	--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	
+end WaterLevelSensor;
