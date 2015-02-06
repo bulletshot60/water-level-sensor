@@ -4,7 +4,14 @@ public
 		SystemWideRequirement1() <= **"all threads must have a specified dispatch protocol"** 
 			forall (t : thread) .
 				HasDispatchProtocol(t)
-				
+		
+		SubsystemWideRequirement2(c : component) <= **"all ports within " c " must be event ports"**
+			forall (subc : connections(c)) .
+				if(is_event_port_connection(subc)) then
+					true	
+				else
+					false
+							
 		HasDispatchProtocol(t : thread) <= **"thread " t " has a dispatch protocol"**
 			has_property(t, Thread_Properties::Dispatch_Protocol)
 			
@@ -13,9 +20,10 @@ public
 				is_event_port(source(conn))
 				
 		ThreadPeriodIsNotLessThan(t : thread, time : int) <= **"Thread " t " runs no less than every " time**
-			property(t, Timing_Properties::Period, time) >= time
+			property(t, Timing_Properties::Period, 2000ms) >= time  
 			
 		--helper functions
+		PrintProperty(p : int) <= ** p ** true
 			
 		PrintAADL(a : aadl) <= ** a ** true
 		

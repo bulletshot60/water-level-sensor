@@ -61,10 +61,9 @@ public
 			parameter1: parameter sensor_reader.read_time -> read_time;
 		flows
 			flow1: flow path in_water_level -> input1 -> water_level;
-			flow2: flow source sensor_reader_impl.flow1 -> parameter1 -> read_time;
+			flow2: flow source sensor_reader_impl -> parameter1 -> read_time;
 		annex Resolute {**
-			prove(PrintConnections(this))
-			prove(ThreadPeriodIsNotLessThan(this, 1000))
+			prove(ThreadPeriodIsNotLessThan(this, 1000ms))
 		**};
 	end sensor_reader.impl;
 	--////////////////////////////////////////
@@ -86,14 +85,14 @@ public
 	
 	process implementation reader_process.impl
 		subcomponents
-			reader: thread sensor_reader.impl;
+			reader_thread: thread sensor_reader.impl;
 		connections
-			input1: port in_water_level -> reader.in_water_level;
-			data1: port reader.water_level -> water_level;
-			data2: port reader.read_time -> read_time;
+			input1: port in_water_level -> reader_thread.in_water_level;
+			data1: port reader_thread.water_level -> water_level;
+			data2: port reader_thread.read_time -> read_time;
 		flows
-			flow1: flow path in_water_level -> input1 -> reader.flow1 -> data1 -> water_level;
-			flow2: flow source reader.flow2 -> data2 -> read_time;
+			flow1: flow path in_water_level -> input1 -> reader_thread -> data1 -> water_level;
+			flow2: flow source reader_thread -> data2 -> read_time;
 	end reader_process.impl;
 	--////////////////////////////////////////
 	-- End Processor Declarations
@@ -132,8 +131,11 @@ public
 			data1: port reader.water_level -> water_level;
 			data2: port reader.read_time -> read_time;
 		flows
-			flow1: flow source water_level_sensor.flow1 -> input1 -> reader.flow1 -> data1 -> water_level;
-			flow2: flow source reader.flow2 -> data2 -> read_time;
+			flow1: flow source water_level_sensor -> input1 -> reader -> data1 -> water_level;
+			flow2: flow source reader -> data2 -> read_time;
+		annex Resolute {**
+			
+		**};
 	end water_level_sensor.impl;
 	--////////////////////////////////////////
 	-- End System Declarations
