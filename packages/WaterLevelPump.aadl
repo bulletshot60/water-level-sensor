@@ -97,9 +97,6 @@ public
 		flows
 			flow1: flow sink enable_water_pump -> event1 -> pump_process.flow1;
 			flow2: flow sink disable_water_pump -> event2 -> pump_process.flow2;
-		annex Resolute {**
-			prove(SourceIsEvent(this))
-		**};
 	end water_pump.impl;
 	--////////////////////////////////////////
 	-- End System Declarations

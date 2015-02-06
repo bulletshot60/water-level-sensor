@@ -62,6 +62,10 @@ public
 		flows
 			flow1: flow path in_water_level -> input1 -> water_level;
 			flow2: flow source sensor_reader_impl.flow1 -> parameter1 -> read_time;
+		annex Resolute {**
+			prove(PrintConnections(this))
+			prove(ThreadPeriodIsNotLessThan(this, 1000))
+		**};
 	end sensor_reader.impl;
 	--////////////////////////////////////////
 	-- End Thread Declarations

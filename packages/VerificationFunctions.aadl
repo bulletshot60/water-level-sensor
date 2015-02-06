@@ -11,6 +11,9 @@ public
 		SourceIsEvent(c : component) <= **"source features for connections on component " c " should have an event source"**
 			forall(conn : connections(c)) . 
 				is_event_port(source(conn))
+				
+		ThreadPeriodIsNotLessThan(t : thread, time : int) <= **"Thread " t " runs no less than every " time**
+			property(t, Timing_Properties::Period, time) >= time
 			
 		--helper functions
 			
